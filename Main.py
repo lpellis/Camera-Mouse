@@ -1,5 +1,5 @@
 #Boa:Frame:Frame1
-
+from __future__ import division
 import wx
 import Preferences
 import cv2
@@ -50,28 +50,38 @@ class Frame1(wx.Frame):
         self.preferences = Preferences.create(self)
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.OnTimer)
+        self.Timer_alt = wx.Timer(self) #used to force update when eg clicing on the title bar (which stops on_idle)
+        self.Bind(wx.EVT_TIMER, self.OnTimer, self.Timer)
+        self.Bind(wx.EVT_TIMER, self.on_idle, self.Timer_alt)
+        self.Timer_alt.Start(200)
         self.Timer.Start(30) # required to trigger the on_idle..
-        self.FaceDector = facedetect.FaceDetect()
+        self.faceDector = facedetect.FaceDetect()
         print 'done'
 
 
+    def draw_rects(self, img, rects, color):
+        for x1, y1, x2, y2 in rects:
+            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+
     def on_idle(self, event):
+
         ret, frame = t.read()
         dc = wx.ClientDC(self.panel_camera)  #320x240
         h, w, d = frame.shape
-        frame = cv2.resize(frame, (200, int(200. / w * h)))
+        frame = cv2.resize(frame, (200, int(200 / w * h)))
         h, w, d = frame.shape
         frame = ltools.image.convert_to_grayscale(frame)
 #        frame = cv2.equalizeHist(frame)
-        print self.FaceDector.detect_face(frame)
-
-        dc.DrawBitmap(ltools.convert.numpyToBitmap(frame), 10, 10, False)
-        print 'idle'
+        self.faceDector.update(frame)
+        #print len(self.faceDector._face_sizes_list)
+        print self.faceDector.face_rect
+        if len(self.faceDector.face_rect):
+            self.draw_rects(frame, [self.faceDector.face_rect], (255, 0, 0))
+        dc.DrawBitmap(ltools.convert.numpyToBitmap(frame), 0, 0, False)
+        #print 'idle'
 
     def OnTimer(self, event):
         pass
-        #print ltools.convert.numpyToBitmap(frame)
 
 
     def OnButton_settingsButton(self, event):

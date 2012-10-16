@@ -1,4 +1,6 @@
+from __future__ import division
 import numpy as np
+
 import cv2
 import cv2.cv as cv
 #from video import create_capture
@@ -10,23 +12,36 @@ class FaceDetect:
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier("data/haarcascades/haarcascade_frontalface_default.xml")
         self.eye_cascade = cv2.CascadeClassifier("data/haarcascades/haarcascade_mcs_lefteye.xml")
-        self.face_sizes_list = []
-        self.face_cascade
+        self._face_sizes_list = []
+        self._FACE_SIZES_LIST_LEN = 30   #used to compute the running avg of face size
+        self.face_rect = []
 
     def update(self, img):
-        pass
+        self.detect_face_with_cascade(img)
 
-    def detect_face(self, img):
+
+    def detect_face_with_cascade(self, img):
         rects = self.face_cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=4, minSize=(30, 30), flags=cv.CV_HAAR_SCALE_IMAGE)
         if len(rects) == 0:
-            return []
+            return
+
         rects[:, 2:] += rects[:, :2]  #transforsms [x, y, w, h] to [x, y, x+w, y+h]
+        rect = rects[0]  #just choose the first face XXX choose biggest here
 
-        return rects[0]
+        self._face_sizes_list.insert(0, rect)
+        if len(self._face_sizes_list) > self._FACE_SIZES_LIST_LEN:
+            self._face_sizes_list.pop()
 
-def draw_rects(img, rects, color):
-    for x1, y1, x2, y2 in rects:
-        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+        s_w, s_h = 0, 0
+        for r in self._face_sizes_list:
+            s_w += r[2] - r[0]
+            s_h += r[3] - r[1]
+
+        w, h = s_w / len(self._face_sizes_list), s_h / len(self._face_sizes_list)
+        x1, y1, x2, y2 = rect
+
+        self.face_rect = [int(t) for t in [(x2 - x1) / 2 - w / 2 + x1, (y2 - y1) / 2 - h / 2 + y1, (x2 - x1) / 2 + w / 2 + x1, (y2 - y1) / 2 + h / 2 + y1]]
+
 
 if __name__ == '__main__':
     import sys, getopt
