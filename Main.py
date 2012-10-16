@@ -63,6 +63,7 @@ class Frame1(wx.Frame):
         frame = cv2.resize(frame, (200, int(200. / w * h)))
         h, w, d = frame.shape
         frame = ltools.image.convert_to_grayscale(frame)
+#        frame = cv2.equalizeHist(frame)
         print self.FaceDector.detect_face(frame)
 
         dc.DrawBitmap(ltools.convert.numpyToBitmap(frame), 10, 10, False)
