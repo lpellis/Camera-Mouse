@@ -5,7 +5,7 @@ import cv2
 import cv2.cv as cv
 #from video import create_capture
 from ltools.common import clock, draw_str
-
+import ltools
 
 class FaceDetect:
 

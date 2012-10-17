@@ -1,12 +1,14 @@
 #Boa:Frame:Frame1
 from __future__ import division
+from Environment import Settings
 import wx
 import Preferences
 import cv2
 import ltools.image
 import ltools.convert
-import Image
+from PIL import Image
 import facedetect
+import numpy
 
 t = cv2.VideoCapture(0)
 
@@ -47,6 +49,10 @@ class Frame1(wx.Frame):
 
     def __init__(self, parent):
         self._init_ctrls(parent)
+
+        self.settings = Settings()
+        self.settings.load_settings()
+
         self.preferences = Preferences.create(self)
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Timer = wx.Timer(self)
@@ -56,6 +62,8 @@ class Frame1(wx.Frame):
         self.Timer_alt.Start(200)
         self.Timer.Start(30) # required to trigger the on_idle..
         self.faceDector = facedetect.FaceDetect()
+        self.test_title = 'ahooi daar'
+
         print 'done'
 
 
@@ -69,15 +77,19 @@ class Frame1(wx.Frame):
         dc = wx.ClientDC(self.panel_camera)  #320x240
         h, w, d = frame.shape
         frame = cv2.resize(frame, (200, int(200 / w * h)))
+        frame_color = numpy.copy(frame)
         h, w, d = frame.shape
+
+
         frame = ltools.image.convert_to_grayscale(frame)
 #        frame = cv2.equalizeHist(frame)
         self.faceDector.update(frame)
         #print len(self.faceDector._face_sizes_list)
         print self.faceDector.face_rect
         if len(self.faceDector.face_rect):
-            self.draw_rects(frame, [self.faceDector.face_rect], (255, 0, 0))
-        dc.DrawBitmap(ltools.convert.numpyToBitmap(frame), 0, 0, False)
+            self.draw_rects(frame_color, [self.faceDector.face_rect], (255, 0, 0))
+
+        dc.DrawBitmap(ltools.convert.numpyToBitmap(frame_color), 0, 0, False)
         #print 'idle'
 
     def OnTimer(self, event):
