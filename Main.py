@@ -9,6 +9,7 @@ import ltools.convert
 from PIL import Image
 import facedetect
 import numpy
+from ltools import tracker
 
 t = cv2.VideoCapture(0)
 
@@ -64,6 +65,8 @@ class Frame1(wx.Frame):
         self.faceDector = facedetect.FaceDetect()
         self.test_title = 'ahooi daar'
 
+        self.tracker = tracker.LKTracker()
+        self.tracker.display_window = 1
         print 'done'
 
 
@@ -77,7 +80,9 @@ class Frame1(wx.Frame):
         dc = wx.ClientDC(self.panel_camera)  #320x240
         h, w, d = frame.shape
         frame = cv2.resize(frame, (200, int(200 / w * h)))
+
         frame_color = numpy.copy(frame)
+        self.tracker.update(frame_color)
         h, w, d = frame.shape
 
 
@@ -85,9 +90,23 @@ class Frame1(wx.Frame):
 #        frame = cv2.equalizeHist(frame)
         self.faceDector.update(frame)
         #print len(self.faceDector._face_sizes_list)
-        print self.faceDector.face_rect
+#        print self.faceDector.face_rect
         if len(self.faceDector.face_rect):
             self.draw_rects(frame_color, [self.faceDector.face_rect], (255, 0, 0))
+#            print self.faceDector.face_rect
+            x1, y1, x2, y2 = self.faceDector.face_rect
+
+            w = x2 - x1
+            h = y2 - y1
+
+            if not self.tracker.track_rectangle or abs(self.tracker.get_center()[0] - (x1 + w // 2)) > 15:
+                self.tracker.reset([x1 + w // 3 , y1 + w // 3 + (w // 8) , w // 3 , w // 3 ])
+            else:
+                x, y = self.tracker.get_center()
+                self.draw_rects(frame_color, [[x - (w) // 2, y - (h) // 2 - (w // 8), x + (w) // 2, y + (h) // 2 - (w // 8)]], (255, 255, 0))
+
+            self.draw_rects(frame_color, [[x1 + w // 3 , y1 + w // 3 , x2 - w // 3, y2 - w // 3]], (255, 110, 0))
+
 
         dc.DrawBitmap(ltools.convert.numpyToBitmap(frame_color), 0, 0, False)
         #print 'idle'

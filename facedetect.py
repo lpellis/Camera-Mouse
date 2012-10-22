@@ -40,7 +40,7 @@ class FaceDetect:
         w, h = s_w / len(self._face_sizes_list), s_h / len(self._face_sizes_list)
         x1, y1, x2, y2 = rect
 
-        self.face_rect = [int(t) for t in [(x2 - x1) / 2 - w / 2 + x1, (y2 - y1) / 2 - h / 2 + y1, (x2 - x1) / 2 + w / 2 + x1, (y2 - y1) / 2 + h / 2 + y1]]
+        self.face_rect = [int(t) for t in [x1, y1, x1 + w, y1 + h ]]
 
 
 if __name__ == '__main__':
