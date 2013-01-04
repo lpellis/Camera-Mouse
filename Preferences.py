@@ -1,31 +1,32 @@
 #Boa:Frame:Preferences
 
+import cv2
 import wx
 from wx.lib.anchors import LayoutAnchors
 
 def create(parent):
     return Preferences(parent)
 
-[wxID_PREFERENCES, wxID_PREFERENCESBUTTON_CANCEL, wxID_PREFERENCESBUTTON_OK, 
- wxID_PREFERENCESCHOICE1, wxID_PREFERENCESCHOICE2, 
- wxID_PREFERENCESCHOICE_FACE_TRACKING_CAMERA, wxID_PREFERENCESNOTEBOOK1, 
- wxID_PREFERENCESPANEL1, wxID_PREFERENCESPANEL2, wxID_PREFERENCESPANEL3, 
- wxID_PREFERENCESSLIDER_ACCELERATION, wxID_PREFERENCESSTATICBOX1, 
- wxID_PREFERENCESSTATICTEXT1, wxID_PREFERENCESSTATICTEXT2, 
- wxID_PREFERENCESSTATICTEXT3, wxID_PREFERENCESSTATICTEXT4, 
- wxID_PREFERENCESSTATICTEXT5, wxID_PREFERENCESSTATICTEXT6, 
- wxID_PREFERENCESSTATICTEXT7, 
+[wxID_PREFERENCES, wxID_PREFERENCESBUTTON_CANCEL, wxID_PREFERENCESBUTTON_OK,
+ wxID_PREFERENCESCHOICE1, wxID_PREFERENCESCHOICE2,
+ wxID_PREFERENCESCHOICE_FACE_TRACKING_CAMERA, wxID_PREFERENCESNOTEBOOK1,
+ wxID_PREFERENCESPANEL1, wxID_PREFERENCESPANEL2, wxID_PREFERENCESPANEL3,
+ wxID_PREFERENCESSLIDER_ACCELERATION, wxID_PREFERENCESSTATICBOX1,
+ wxID_PREFERENCESSTATICTEXT1, wxID_PREFERENCESSTATICTEXT2,
+ wxID_PREFERENCESSTATICTEXT3, wxID_PREFERENCESSTATICTEXT4,
+ wxID_PREFERENCESSTATICTEXT5, wxID_PREFERENCESSTATICTEXT6,
+ wxID_PREFERENCESSTATICTEXT7,
 ] = [wx.NewId() for _init_ctrls in range(19)]
 
 class Preferences(wx.Frame):
     def _init_coll_notebook1_Pages(self, parent):
         # generated method, don't edit
 
-        parent.AddPage(imageId=-1, page=self.panel1, select=True,
+        parent.AddPage(imageId= -1, page=self.panel1, select=True,
               text=u'Face Tracking')
-        parent.AddPage(imageId=-1, page=self.panel2, select=False,
+        parent.AddPage(imageId= -1, page=self.panel2, select=False,
               text=u'Startup')
-        parent.AddPage(imageId=-1, page=self.panel3, select=False,
+        parent.AddPage(imageId= -1, page=self.panel3, select=False,
               text=u'Iris Tracking')
 
     def _init_ctrls(self, prnt):
@@ -105,7 +106,10 @@ class Preferences(wx.Frame):
               parent=self.panel1, pos=wx.Point(80, 80), size=wx.Size(160, 24),
               style=wx.SL_HORIZONTAL, value=60)
         self.slider_acceleration.SetLabel(u'')
-        self.slider_acceleration.Enable(False)
+        self.slider_acceleration.Enable(True)
+        self.slider_acceleration.Bind(wx.EVT_COMMAND_SCROLL,
+              self.OnSlider_accelerationCommandScroll,
+              id=wxID_PREFERENCESSLIDER_ACCELERATION)
 
         self.staticText5 = wx.StaticText(id=wxID_PREFERENCESSTATICTEXT5,
               label=u'Slow', name='staticText5', parent=self.panel1,
@@ -123,6 +127,9 @@ class Preferences(wx.Frame):
               id=wxID_PREFERENCESCHOICE_FACE_TRACKING_CAMERA,
               name=u'choice_face_tracking_camera', parent=self.panel1,
               pos=wx.Point(104, 13), size=wx.Size(216, 21), style=0)
+        self.choice_face_tracking_camera.Bind(wx.EVT_CHOICE,
+              self.OnChoice_face_tracking_camera,
+              id=wxID_PREFERENCESCHOICE_FACE_TRACKING_CAMERA)
 
         self.staticText7 = wx.StaticText(id=wxID_PREFERENCESSTATICTEXT7,
               label=u'Camera', name='staticText7', parent=self.panel1,
@@ -131,24 +138,40 @@ class Preferences(wx.Frame):
         self._init_coll_notebook1_Pages(self.notebook1)
 
     def __init__(self, parent):
+        self.parent = parent;
         self._init_ctrls(parent)
         self.settings = parent.settings
         self.choice_face_tracking_camera.Clear()
         self.choice_face_tracking_camera.AppendItems([item['name'] for item in self.settings.camera_list])
-        self.choice_face_tracking_camera.Select(0)
+        self.load_controls()
 
+
+    def load_controls(self):
+        self.choice_face_tracking_camera.Select(self.parent.settings.settings['face_tracking']['camera_id'])
+        self.slider_acceleration.Value = self.parent.settings.settings['face_tracking']['speed']
 
 
     def OnButton_okButton(self, event):
-        print self.settings.camera_list
-        print self.settings
+        self.parent.settings.save()
         self.Hide()
-        event.Skip()
+
 
     def OnButton_cancelButton(self, event):
+
+        self.parent.settings.apply_settings(self.parent.settings.defaults)
+        self.load_controls()
         self.Hide()
-        event.Skip()
 
     def OnPreferencesClose(self, event):
         self.Hide()
+
+    def OnChoice_face_tracking_camera(self, event):
+
+        self.parent.settings.load_face_tracking_camera(self.choice_face_tracking_camera.Selection)
+        print self.choice_face_tracking_camera.Selection
+        print 'Selecting camera'
+
+    def OnSlider_accelerationCommandScroll(self, event):
+        self.parent.settings.settings['face_tracking']['speed'] = self.slider_acceleration.Value
+        event.Skip()
 

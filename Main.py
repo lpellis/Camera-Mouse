@@ -1,6 +1,6 @@
 #Boa:Frame:Frame1
 from __future__ import division
-from Environment import Settings
+from Settings import Settings
 import wx
 import Preferences
 import cv2
@@ -11,7 +11,7 @@ import facedetect
 import numpy
 from ltools import tracker
 
-t = cv2.VideoCapture(0)
+#t = cv2.VideoCapture(0)
 
 
 
@@ -51,8 +51,9 @@ class Frame1(wx.Frame):
     def __init__(self, parent):
         self._init_ctrls(parent)
 
-        self.settings = Settings()
-        self.settings.load_settings()
+
+
+        self.settings = Settings(self)
 
         self.preferences = Preferences.create(self)
         self.Bind(wx.EVT_IDLE, self.on_idle)
@@ -67,45 +68,76 @@ class Frame1(wx.Frame):
 
         self.tracker = tracker.LKTracker()
         self.tracker.display_window = 1
+
+#        self.camera = self.settings.face_tracking_camera
         print 'done'
 
 
     def draw_rects(self, img, rects, color):
-        for x1, y1, x2, y2 in rects:
-            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+
+       # rects[:, 2:] += rects[:, :2]  #transforsms [x, y, w, h] to [x, y, x+w, y+h]
+        for x1, y1, w, h in rects:
+            cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), color, 1)
 
     def on_idle(self, event):
 
-        ret, frame = t.read()
+        ret, frame = self.camera.read()
         dc = wx.ClientDC(self.panel_camera)  #320x240
         h, w, d = frame.shape
         frame = cv2.resize(frame, (200, int(200 / w * h)))
+        frame = cv2.flip(frame, 1)
 
         frame_color = numpy.copy(frame)
-        self.tracker.update(frame_color)
+#        self.tracker.update(frame_color)
         h, w, d = frame.shape
 
 
-        frame = ltools.image.convert_to_grayscale(frame)
+#        frame = ltools.image.convert_to_grayscale(frame)
 #        frame = cv2.equalizeHist(frame)
-        self.faceDector.update(frame)
+        self.faceDector.update(frame_color)
+
+        if len(self.faceDector.face_rect):
+#            print self.faceDector.tempval
+            if self.faceDector._diffsize < 0.1:
+                self.draw_rects(frame_color, [self.faceDector.face_rect], (255, 0, 100))
+            else:
+                self.draw_rects(frame_color, [self.faceDector.face_rect], (155, 100, 100))
+
+        if self.faceDector.ready:
+            self.draw_rects(frame_color, [self.faceDector.face_rect_raw], (255, 0, 000))
+#        return
         #print len(self.faceDector._face_sizes_list)
 #        print self.faceDector.face_rect
-        if len(self.faceDector.face_rect):
+        if 0 and len(self.faceDector.face_rect):
             self.draw_rects(frame_color, [self.faceDector.face_rect], (255, 0, 0))
+            x, y = self.faceDector.zero_pos
+            self.draw_rects(frame_color, [[x - 2, y - 2, x + 2, y + 2]], (255, 0, 0))
 #            print self.faceDector.face_rect
             x1, y1, x2, y2 = self.faceDector.face_rect
 
-            w = x2 - x1
-            h = y2 - y1
 
-            if not self.tracker.track_rectangle or abs(self.tracker.get_center()[0] - (x1 + w // 2)) > 15:
-                self.tracker.reset([x1 + w // 3 , y1 + w // 3 + (w // 8) , w // 3 , w // 3 ])
-            else:
-                x, y = self.tracker.get_center()
-                self.draw_rects(frame_color, [[x - (w) // 2, y - (h) // 2 - (w // 8), x + (w) // 2, y + (h) // 2 - (w // 8)]], (255, 255, 0))
 
-            self.draw_rects(frame_color, [[x1 + w // 3 , y1 + w // 3 , x2 - w // 3, y2 - w // 3]], (255, 110, 0))
+#            face_img = frame[y1:y2, x1:x2]
+#            eyes = self.faceDector.detect_eyes_with_cascade(face_img)
+#            if (eyes != None and len(eyes)):
+#                self.draw_rects(frame_color, eyes + [x1, y1, x1, y1], (255, 110, 100));
+#
+#            self.faceDector.detect_nose_with_cascade(face_img)
+#
+#            self.draw_rects(frame_color, [self.faceDector.nose_rect + [x1, y1, x1, y1]], (200, 110, 100));
+#            print [self.faceDector.nose_rect + [x1, y1, x1, y1]]
+#            w = x2 - x1
+#            h = y2 - y1
+#
+#            if not self.tracker.track_rectangle or abs(self.tracker.get_center()[0] - (x1 + w // 2)) > 15:
+#                self.tracker.reset([x1 + w // 3 , y1 + w // 3 + (w // 8) , w // 3 , w // 3 ])
+#            else:
+#                x, y = self.tracker.get_center()
+#                self.draw_rects(frame_color, [[x - (w) // 2, y - (h) // 2 - (w // 8), x + (w) // 2, y + (h) // 2 - (w // 8)]], (255, 255, 0))
+#
+#                self.draw_rects(frame_color, [self.faceDector.nose_rect + [x - (w) // 2, y - (h) // 2 - (w // 8), x - (w) // 2, y - (h) // 2 - (w // 8)]], (100, 110, 100));
+
+          #  self.draw_rects(frame_color, [[x1 + w // 3 , y1 + w // 3 , x2 - w // 3, y2 - w // 3]], (255, 110, 0))
 
 
         dc.DrawBitmap(ltools.convert.numpyToBitmap(frame_color), 0, 0, False)
