@@ -2,6 +2,15 @@
  "blob": 2, 
  "face_tracking": {
   "camera_id": 0, 
-  "speed": 18
+  "eyebrow_raise": "toggle_keyboard", 
+  "left_blink": "left_click", 
+  "left_mouth": "scroll_up", 
+  "long_blink": "reset", 
+  "right_blink": "right_click", 
+  "right_mouth": "scroll_down", 
+  "speed": 51
+ }, 
+ "startup": {
+  "autostart": false
  }
 }

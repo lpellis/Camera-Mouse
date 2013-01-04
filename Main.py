@@ -58,7 +58,7 @@ class Frame1(wx.Frame):
         self.preferences = Preferences.create(self)
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Timer = wx.Timer(self)
-        self.Timer_alt = wx.Timer(self) #used to force update when eg clicing on the title bar (which stops on_idle)
+        self.Timer_alt = wx.Timer(self) #used to force update when eg clicking on the title bar (which stops on_idle)
         self.Bind(wx.EVT_TIMER, self.OnTimer, self.Timer)
         self.Bind(wx.EVT_TIMER, self.on_idle, self.Timer_alt)
         self.Timer_alt.Start(200)

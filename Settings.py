@@ -14,7 +14,16 @@ class Settings:
     def __init__(self, parent):
         self.parent = parent
         self.defaults = {'face_tracking':
-                            {'camera_id' : 0, 'speed': 50},
+                            {'camera_id' : 0, 'speed': 50,
+                             'left_blink': 'left_click',
+                             'right_blink': 'right_click',
+                             'left_mouth': 'scroll_up',
+                             'right_mouth': 'scroll_down',
+                             'long_blink': 'reset',
+                             'eyebrow_raise': 'toggle_keyboard',
+                             },
+                         'startup':
+                            {'autostart': False},
                             'blob': 2
                         }
         self.settings = {}
@@ -50,9 +59,7 @@ class Settings:
 
     def load_face_tracking_camera(self, camera_id):
 
-        print 'loading camera: ', camera_id
         if (camera_id == self._face_tracking_camera_id):
-            print 'skipping'
             return
 
         if camera_id > len(self.camera_list):
@@ -74,20 +81,16 @@ class Settings:
         json.dump(self.settings, open('options.json', 'w'), sort_keys=True, indent=True)
 
     def load_camera_list(self):
-        i = 0
 
-        while i < 2:
+        i = 0
+        while 1:
             try:
                 c = VideoCapture.Device(i)
                 self.camera_list.append({'name': c.getDisplayName(), 'device': c})
+                del(c)
                 i += 1
             except:
                 break
-
-        if len(self.camera_list) == 0:
-            return
-
-#        self.camera_main = self.camera_list[0]['device']
 
 
 if __name__ == "__main__":
